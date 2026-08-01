@@ -1,0 +1,8 @@
+{
+  "name": "Lumina AI",
+  "description": "A premium, full-fledged AI chat application featuring a sophisticated dark theme and a perfectly crafted pill-shaped search input.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
