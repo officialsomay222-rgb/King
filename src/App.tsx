@@ -245,7 +245,7 @@ export default function App() {
   };
 
   return (
-    <div className={cn("flex flex-col h-[100dvh] font-sans text-[#e3e3e3] overflow-hidden selection:bg-white/20 relative transition-colors duration-500", THEMES.find(t => t.id === theme)?.bg || 'bg-black')}>
+    <div className={cn("fixed inset-0 flex flex-col font-sans text-[#e3e3e3] overflow-hidden selection:bg-white/20 transition-colors duration-500", THEMES.find(t => t.id === theme)?.bg || 'bg-black')}>
       
       {/* Sidebar Toggle Button & Model Selector */}
       <div className="absolute top-6 left-6 z-40 flex items-center gap-4">
