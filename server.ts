@@ -32,7 +32,14 @@ async function startServer() {
       let apiKey = process.env.Owner || process.env.GROQ_API;
       let finalModel = model;
 
-      if (model === 'nousresearch/hermes-4-70b') {
+      if (model === 'DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF') {
+        apiUrl = `https://router.huggingface.co/v1/chat/completions`;
+        apiKey = process.env.HF_TOKEN;
+        finalModel = model;
+        if (!apiKey) {
+           return res.status(500).json({ error: 'HF_TOKEN is missing in environment' });
+        }
+      } else if (model === 'nousresearch/hermes-4-70b') {
         if (process.env.Owner) {
           apiUrl = "https://openrouter.ai/api/v1/chat/completions";
           apiKey = process.env.Owner;
@@ -93,7 +100,8 @@ async function startServer() {
       
       if (!response.ok) {
         console.error('API Error:', data);
-        return res.status(response.status).json({ error: data.error?.message || 'Failed to generate response' });
+        const errorMessage = typeof data.error === 'string' ? data.error : data.error?.message || 'Failed to generate response';
+        return res.status(response.status).json({ error: errorMessage });
       }
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {

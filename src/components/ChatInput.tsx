@@ -62,8 +62,8 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
         <form 
           onSubmit={handleSubmit}
           className={cn(
-            "pointer-events-auto flex items-end w-full max-w-[800px] bg-[#212328] px-5 py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-300 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 focus-within:shadow-[0_15px_40px_rgba(0,0,0,0.7)]",
-            isExpanded ? "rounded-[24px]" : "rounded-[36px] min-h-[64px] items-center"
+            "pointer-events-auto flex items-end w-full max-w-[800px] bg-[#212328] pl-6 pr-2 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-300 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 focus-within:shadow-[0_15px_40px_rgba(0,0,0,0.7)]",
+            isExpanded ? "rounded-[24px]" : "rounded-[32px] min-h-[64px] items-center"
           )}
         >
           <textarea
@@ -81,15 +81,15 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
             type="submit"
             disabled={!input.trim() || isLoading}
             className={cn(
-              "ml-3 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 group active:scale-95 transform-gpu shadow-md",
+              "ml-3 flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 group active:scale-95 transform-gpu",
               input.trim() && !isLoading
-                ? "bg-white text-black hover:bg-zinc-200"
+                ? "bg-white text-black shadow-md hover:bg-zinc-200"
                 : "bg-white/10 text-zinc-500 cursor-not-allowed",
-              isExpanded && "mb-0.5"
+              isExpanded && "mb-0"
             )}
             title="Send Message"
           >
-            <ArrowUp size={20} className="stroke-[2.5] transition-transform duration-200 group-hover:-translate-y-0.5" />
+            <ArrowUp size={24} className="stroke-[2.5] transition-transform duration-200 group-hover:-translate-y-0.5" />
           </button>
         </form>
       </div>

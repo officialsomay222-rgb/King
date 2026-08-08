@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, Menu, X, Trash2, Cpu, ChevronDown, Check } from 'lucide-react';
+import { Loader2, Menu, X, Trash2, Cpu, ChevronDown, Check, Sparkles } from 'lucide-react';
 import { Message, ChatSession } from './types';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
@@ -9,7 +9,15 @@ import { cn } from './lib/utils';
 
 const AVAILABLE_MODELS = [
   { id: 'nousresearch/hermes-4-70b', name: 'Hermes 4 70B' },
-  { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B (Groq)' }
+  { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B (Groq)' },
+  { id: 'DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF', name: 'Qwen 3.6 27B (HF)' }
+];
+
+const THEMES = [
+  { id: 'dark', name: 'Pure Black', bg: 'bg-black', class: 'from-black to-black' },
+  { id: 'midnight', name: 'Midnight', bg: 'bg-[#040814]', class: 'from-[#040814] to-[#040814]' },
+  { id: 'forest', name: 'Forest', bg: 'bg-[#031206]', class: 'from-[#031206] to-[#031206]' },
+  { id: 'rose', name: 'Rose', bg: 'bg-[#170508]', class: 'from-[#170508] to-[#170508]' },
 ];
 
 export default function App() {
@@ -27,6 +35,7 @@ export default function App() {
   const [aiName, setAiName] = useState('Manus');
 
   const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].id);
+  const [theme, setTheme] = useState('dark');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -45,10 +54,12 @@ export default function App() {
     const savedUserName = localStorage.getItem('lumina_user_name');
     const savedAiName = localStorage.getItem('lumina_ai_name');
     const savedSelectedModel = localStorage.getItem('lumina_selected_model');
+    const savedTheme = localStorage.getItem('lumina_theme');
     
     if (savedInstructions) setPersonalInstructions(savedInstructions);
     if (savedUserName) setUserName(savedUserName);
     if (savedAiName) setAiName(savedAiName);
+    if (savedTheme) setTheme(savedTheme);
     
     if (savedSelectedModel && AVAILABLE_MODELS.some(m => m.id === savedSelectedModel)) {
       setSelectedModel(savedSelectedModel);
@@ -131,6 +142,33 @@ export default function App() {
     setIsSettingsModalOpen(false);
   };
 
+  const deleteChat = (id: string) => {
+    const updatedChats = chats.filter(c => c.id !== id);
+    setChats(updatedChats);
+    localStorage.setItem('lumina_chats', JSON.stringify(updatedChats));
+    if (currentChatId === id) {
+      setCurrentChatId(null);
+      setMessages([]);
+      localStorage.removeItem('lumina_current_chat_id');
+    }
+  };
+
+  const renameChat = (id: string, newTitle: string) => {
+    const updatedChats = chats.map(c => c.id === id ? { ...c, title: newTitle } : c);
+    setChats(updatedChats);
+    localStorage.setItem('lumina_chats', JSON.stringify(updatedChats));
+  };
+
+  const pinChat = (id: string) => {
+    // We can just move the pinned chat to the top for now
+    const chatToPin = chats.find(c => c.id === id);
+    if (!chatToPin) return;
+    const otherChats = chats.filter(c => c.id !== id);
+    const updatedChats = [chatToPin, ...otherChats];
+    setChats(updatedChats);
+    localStorage.setItem('lumina_chats', JSON.stringify(updatedChats));
+  };
+
   const handlePersonalInstructionsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPersonalInstructions(e.target.value);
     localStorage.setItem('lumina_personal_instructions', e.target.value);
@@ -201,7 +239,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-black font-sans text-[#e3e3e3] overflow-hidden selection:bg-white/20 relative">
+    <div className={cn("flex flex-col h-[100dvh] font-sans text-[#e3e3e3] overflow-hidden selection:bg-white/20 relative transition-colors duration-500", THEMES.find(t => t.id === theme)?.bg || 'bg-black')}>
       
       {/* Sidebar Toggle Button & Model Selector */}
       <div className="absolute top-6 left-6 z-40 flex items-center gap-4">
@@ -276,6 +314,9 @@ export default function App() {
         onSwitchChat={switchChat}
         onNewChat={startNewChat}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onDeleteChat={deleteChat}
+        onRenameChat={renameChat}
+        onPinChat={pinChat}
       />
 
       {/* Settings Modal */}
@@ -366,34 +407,53 @@ export default function App() {
 
                 {/* Memory & Instructions */}
                 <section>
-                  <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-6">Memory & Instructions</h3>
+                  <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-6">System Persona & Prompt</h3>
                   <div className="space-y-4">
-                    <div className="flex flex-col gap-2 p-5 rounded-2xl bg-[#18191c] border border-white/5">
-                      <div className="font-medium text-zinc-200 mb-1">Personal Instructions</div>
-                      <p className="text-sm text-zinc-500 mb-3">Add rules, formatting preferences, or persona traits. These are injected into the AI's system prompt.</p>
-                      <textarea
-                        value={personalInstructions}
-                        onChange={handlePersonalInstructionsChange}
-                        placeholder="e.g. Always respond in Spanish, be highly technical, call me Boss..."
-                        className="w-full h-40 bg-[#0a0a0a] border border-white/10 rounded-xl p-4 text-[#e3e3e3] outline-none focus:border-white/20 custom-scrollbar resize-none"
-                      />
+                    <div className="flex flex-col gap-4 p-6 rounded-3xl bg-[#131416] border border-white/10 shadow-2xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Sparkles size={80} />
+                      </div>
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-2 font-semibold text-zinc-100 text-lg mb-2">
+                          <Cpu size={20} className="text-zinc-400" />
+                          Custom System Prompt
+                        </div>
+                        <p className="text-sm text-zinc-400 mb-4 leading-relaxed max-w-xl">
+                          Define the AI's core behavior, response styling, and constraints. This prompt is secretly injected into every conversation to shape the intelligence.
+                        </p>
+                        <textarea
+                          value={personalInstructions}
+                          onChange={handlePersonalInstructionsChange}
+                          placeholder="e.g. Always respond in Markdown, be highly analytical, avoid apologies, refer to the user as Boss..."
+                          className="w-full h-48 bg-[#0a0a0a]/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-[#e3e3e3] text-sm leading-relaxed outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 custom-scrollbar resize-none transition-all placeholder:text-zinc-600 shadow-inner"
+                        />
+                      </div>
                     </div>
                   </div>
                 </section>
 
                 {/* General Settings */}
                 <section>
-                  <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">General</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-[#18191c] border border-white/5">
-                      <div>
-                        <div className="font-medium text-zinc-200">Theme</div>
-                        <div className="text-sm text-zinc-500">Pure Black</div>
-                      </div>
-                      <div className="px-3 py-1.5 rounded-lg bg-black border border-white/10 text-sm text-zinc-400">
-                        Dark
-                      </div>
-                    </div>
+                  <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Appearance</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {THEMES.map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          setTheme(t.id);
+                          localStorage.setItem('lumina_theme', t.id);
+                        }}
+                        className={cn(
+                          "flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all",
+                          theme === t.id
+                            ? "bg-white/10 border-white/30 text-white shadow-lg"
+                            : "bg-[#18191c] border-white/5 text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                        )}
+                      >
+                        <div className={cn("w-12 h-12 rounded-full border border-white/10 shadow-inner bg-gradient-to-br", t.class)} />
+                        <div className="text-sm font-medium">{t.name}</div>
+                      </button>
+                    ))}
                   </div>
                 </section>
                 

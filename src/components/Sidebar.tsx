@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Settings, Search, Clock, Pin, UserCircle, Sparkles } from 'lucide-react';
+import { MessageSquare, Settings, Search, Clock, Pin, UserCircle, Sparkles, Edit2, Trash2 } from 'lucide-react';
 import { ChatSession } from '../types';
 import { cn } from '../lib/utils';
 
@@ -12,6 +12,9 @@ interface SidebarProps {
   onSwitchChat: (id: string) => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
+  onDeleteChat?: (id: string) => void;
+  onRenameChat?: (id: string, newTitle: string) => void;
+  onPinChat?: (id: string) => void;
 }
 
 export function Sidebar({ 
@@ -21,9 +24,14 @@ export function Sidebar({
   currentChatId, 
   onSwitchChat, 
   onNewChat, 
-  onOpenSettings 
+  onOpenSettings,
+  onDeleteChat,
+  onRenameChat,
+  onPinChat
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
 
   const filteredChats = chats.filter(chat => 
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -95,22 +103,85 @@ export function Sidebar({
                   </div>
                   
                   {filteredChats.map(chat => (
-                    <button 
+                    <div 
                       key={chat.id}
                       onClick={() => onSwitchChat(chat.id)}
                       className={cn(
-                        "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left overflow-hidden",
+                        "group relative flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left overflow-hidden cursor-pointer",
                         currentChatId === chat.id 
                           ? "bg-white/10 text-white border border-white/5" 
                           : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent"
                       )}
                     >
-                      <div className={cn(
-                        "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-white transition-transform duration-300",
-                        currentChatId === chat.id ? "scale-y-100" : "scale-y-0"
-                      )} />
-                      <span className="truncate flex-1 text-sm pl-1">{chat.title}</span>
-                    </button>
+                      <div className="flex items-center gap-3 overflow-hidden flex-1">
+                        <div className={cn(
+                          "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-white transition-transform duration-300",
+                          currentChatId === chat.id ? "scale-y-100" : "scale-y-0"
+                        )} />
+                        {editingChatId === chat.id ? (
+                          <form 
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              if (onRenameChat && editTitle.trim()) {
+                                onRenameChat(chat.id, editTitle.trim());
+                              }
+                              setEditingChatId(null);
+                            }}
+                            className="flex-1 w-full pl-1"
+                          >
+                            <input
+                              autoFocus
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onBlur={() => {
+                                if (onRenameChat && editTitle.trim()) {
+                                  onRenameChat(chat.id, editTitle.trim());
+                                }
+                                setEditingChatId(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full bg-black/50 text-white px-2 py-0.5 rounded outline-none border border-white/20 text-sm"
+                            />
+                          </form>
+                        ) : (
+                          <span className="truncate flex-1 text-sm pl-1">{chat.title}</span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div 
+                          className="p-1.5 rounded-md hover:bg-white/10 hover:text-white text-zinc-400 transition-colors"
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (onPinChat) onPinChat(chat.id);
+                          }}
+                          title="Pin"
+                        >
+                          <Pin size={14} />
+                        </div>
+                        <div 
+                          className="p-1.5 rounded-md hover:bg-white/10 hover:text-white text-zinc-400 transition-colors"
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setEditingChatId(chat.id);
+                            setEditTitle(chat.title);
+                          }}
+                          title="Rename"
+                        >
+                          <Edit2 size={14} />
+                        </div>
+                        <div 
+                          className="p-1.5 rounded-md hover:bg-red-500/20 hover:text-red-400 text-zinc-400 transition-colors"
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (onDeleteChat) onDeleteChat(chat.id);
+                          }}
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
