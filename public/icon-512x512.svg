@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="xGrad1" x1="176" y1="176" x2="336" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#71717a"/>
+    </linearGradient>
+    <linearGradient id="xGrad2" x1="336" y1="176" x2="176" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a1a1aa"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect x="2" y="2" width="508" height="508" rx="110" fill="transparent" stroke="#27272a" stroke-width="4"/>
+  
+  <g filter="url(#glow)">
+    <path d="M176 176L336 336" stroke="url(#xGrad1)" stroke-width="44" stroke-linecap="round"/>
+    <path d="M336 176L176 336" stroke="url(#xGrad2)" stroke-width="44" stroke-linecap="round"/>
+  </g>
+</svg>
