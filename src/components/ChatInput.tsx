@@ -62,7 +62,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
         <form 
           onSubmit={handleSubmit}
           className={cn(
-            "pointer-events-auto flex items-end w-full max-w-[800px] bg-[#212328] pl-6 pr-2 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-300 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 focus-within:shadow-[0_15px_40px_rgba(0,0,0,0.7)]",
+            "pointer-events-auto flex items-end w-full max-w-[800px] bg-[#1a1c20]/80 backdrop-blur-md pl-6 pr-2 py-2 shadow-2xl border border-white/10 transition-all duration-300 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20",
             isExpanded ? "rounded-[24px]" : "rounded-[32px] min-h-[64px] items-center"
           )}
         >

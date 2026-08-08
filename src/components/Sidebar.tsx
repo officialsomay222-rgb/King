@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Settings, Search, Clock, Pin, UserCircle, Sparkles, Edit2, Trash2 } from 'lucide-react';
+import { MessageSquare, Settings, Search, Clock, Pin, UserCircle, Sparkles, Edit2, Trash2, MoreVertical, X } from 'lucide-react';
 import { ChatSession } from '../types';
 import { cn } from '../lib/utils';
 
@@ -32,6 +32,31 @@ export function Sidebar({
   const [searchQuery, setSearchQuery] = useState('');
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [activeOptionsId, setActiveOptionsId] = useState<string | null>(null);
+  
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handlePointerDown = (id: string) => {
+    longPressTimer.current = setTimeout(() => {
+      setActiveOptionsId(id);
+    }, 500); // 500ms long press
+  };
+
+  const handlePointerUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  
+  // Close options if clicked outside
+  useEffect(() => {
+    const handleClick = () => {
+      if (activeOptionsId) setActiveOptionsId(null);
+    };
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [activeOptionsId]);
 
   const filteredChats = chats.filter(chat => 
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,18 +79,18 @@ export function Sidebar({
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute top-0 left-0 h-full w-[320px] bg-[#0a0a0a] border-r border-white/5 z-40 flex flex-col shadow-2xl"
+            className="absolute top-0 left-0 h-full w-[320px] bg-black/40 backdrop-blur-xl border-r border-white/5 z-40 flex flex-col shadow-2xl ring-1 ring-white/5"
           >
             {/* Header / Brand */}
             <div className="p-6 pt-8 pb-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)] relative overflow-hidden group">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <Sparkles size={18} className="text-white relative z-10" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-semibold tracking-wider text-white/95 text-lg">MANUS X</span>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">Intelligence Core</span>
+                  <span className="font-semibold tracking-widest text-white/95 text-lg">MANUS X</span>
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-medium">Intelligence Core</span>
                 </div>
               </div>
             </div>
@@ -74,7 +99,7 @@ export function Sidebar({
             <div className="px-4 pb-4 space-y-4 shrink-0">
               <button 
                 onClick={onNewChat}
-                className="relative group flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-white text-black font-semibold transition-all hover:bg-zinc-200 active:scale-[0.98] w-full overflow-hidden"
+                className="relative group flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-white text-black font-semibold transition-all hover:bg-zinc-200 active:scale-[0.98] w-full overflow-hidden shadow-[0_0_15px_rgba(255,255,255,0.1)]"
               >
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
                 <MessageSquare size={18} className="relative z-10" />
@@ -105,9 +130,16 @@ export function Sidebar({
                   {filteredChats.map(chat => (
                     <div 
                       key={chat.id}
-                      onClick={() => onSwitchChat(chat.id)}
+                      onPointerDown={() => handlePointerDown(chat.id)}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                      onClick={() => {
+                        if (activeOptionsId !== chat.id) {
+                          onSwitchChat(chat.id)
+                        }
+                      }}
                       className={cn(
-                        "group relative flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left overflow-hidden cursor-pointer",
+                        "group relative flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all w-full text-left cursor-pointer",
                         currentChatId === chat.id 
                           ? "bg-white/10 text-white border border-white/5" 
                           : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent"
@@ -144,43 +176,69 @@ export function Sidebar({
                             />
                           </form>
                         ) : (
-                          <span className="truncate flex-1 text-sm pl-1">{chat.title}</span>
+                          <span className="truncate flex-1 text-sm pl-1 select-none">{chat.title}</span>
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div 
-                          className="p-1.5 rounded-md hover:bg-white/10 hover:text-white text-zinc-400 transition-colors"
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            if (onPinChat) onPinChat(chat.id);
+                      <div className="flex items-center">
+                        <div
+                          className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-white/10 text-zinc-400 hover:text-white transition-all md:hidden group-hover:block"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveOptionsId(activeOptionsId === chat.id ? null : chat.id);
                           }}
-                          title="Pin"
                         >
-                          <Pin size={14} />
-                        </div>
-                        <div 
-                          className="p-1.5 rounded-md hover:bg-white/10 hover:text-white text-zinc-400 transition-colors"
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setEditingChatId(chat.id);
-                            setEditTitle(chat.title);
-                          }}
-                          title="Rename"
-                        >
-                          <Edit2 size={14} />
-                        </div>
-                        <div 
-                          className="p-1.5 rounded-md hover:bg-red-500/20 hover:text-red-400 text-zinc-400 transition-colors"
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            if (onDeleteChat) onDeleteChat(chat.id);
-                          }}
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
+                          <MoreVertical size={14} />
                         </div>
                       </div>
+
+                      <AnimatePresence>
+                        {activeOptionsId === chat.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, x: 10 }}
+                            animate={{ opacity: 1, scale: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, x: 10 }}
+                            className="absolute right-2 top-full mt-1 w-40 bg-[#18191c] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col py-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (onPinChat) onPinChat(chat.id);
+                                setActiveOptionsId(null);
+                              }}
+                              className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors w-full text-left"
+                            >
+                              <Pin size={14} />
+                              Pin Chat
+                            </button>
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setEditingChatId(chat.id);
+                                setEditTitle(chat.title);
+                                setActiveOptionsId(null);
+                              }}
+                              className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors w-full text-left"
+                            >
+                              <Edit2 size={14} />
+                              Rename
+                            </button>
+                            <div className="h-px w-full bg-white/5 my-1" />
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (onDeleteChat) onDeleteChat(chat.id);
+                                setActiveOptionsId(null);
+                              }}
+                              className="flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full text-left"
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   ))}
                 </div>
@@ -195,7 +253,7 @@ export function Sidebar({
             </div>
             
             {/* User Profile / Settings Footer */}
-            <div className="p-4 border-t border-white/5 shrink-0 bg-[#0a0a0a]">
+            <div className="p-4 border-t border-white/10 shrink-0 bg-transparent">
               <div className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-zinc-700 to-zinc-500 flex items-center justify-center shrink-0">

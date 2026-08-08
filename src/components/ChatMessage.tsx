@@ -20,8 +20,7 @@ export function ChatMessage({ message, userName, aiName }: ChatMessageProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className={cn(
-        "flex w-full px-4 md:px-8 py-6 transform-gpu will-change-transform",
-        isAi ? "bg-[#0a0a0a]" : "bg-transparent"
+        "flex w-full px-4 md:px-8 py-6 transform-gpu will-change-transform bg-transparent"
       )}
     >
       <div className={cn(
@@ -34,7 +33,7 @@ export function ChatMessage({ message, userName, aiName }: ChatMessageProps) {
         
         <div className={cn(
           "w-full max-w-[85%]",
-          isAi ? "" : "bg-[#18191c] border border-white/5 px-5 py-4 rounded-2xl rounded-tr-sm shadow-md"
+          isAi ? "" : "bg-[#2b2d31] text-white px-5 py-4 rounded-3xl rounded-tr-sm shadow-sm"
         )}>
           {isAi ? (
             <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#2b2d31] prose-pre:border prose-pre:border-white/10 prose-pre:rounded-xl max-w-none text-[#d1d5db]">
@@ -43,7 +42,7 @@ export function ChatMessage({ message, userName, aiName }: ChatMessageProps) {
               </ReactMarkdown>
             </div>
           ) : (
-            <div className="text-[17px] text-[#e3e3e3] font-normal leading-relaxed whitespace-pre-wrap">
+            <div className="text-[17px] font-normal leading-relaxed whitespace-pre-wrap">
               {message.content}
             </div>
           )}

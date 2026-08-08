@@ -10,7 +10,7 @@ import { cn } from './lib/utils';
 const AVAILABLE_MODELS = [
   { id: 'nousresearch/hermes-4-70b', name: 'Hermes 4 70B' },
   { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B (Groq)' },
-  { id: 'DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF', name: 'Qwen 3.6 27B (HF)' }
+  { id: 'Qwen/Qwen3.6-27B', name: 'Qwen 3.6 27B (HF)' }
 ];
 
 const THEMES = [
@@ -22,7 +22,13 @@ const THEMES = [
 
 export default function App() {
   const [chats, setChats] = useState<ChatSession[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const currentChatIdRef = useRef<string | null>(null);
+  const [currentChatId, setCurrentChatIdState] = useState<string | null>(null);
+
+  const setCurrentChatId = (id: string | null) => {
+    setCurrentChatIdState(id);
+    currentChatIdRef.current = id;
+  };
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -95,7 +101,7 @@ export default function App() {
     
     if (newMessages.length === 0) return;
 
-    if (!currentChatId) {
+    if (!currentChatIdRef.current) {
       const newChatId = Date.now().toString();
       const newChat: ChatSession = {
         id: newChatId,
@@ -108,7 +114,7 @@ export default function App() {
       localStorage.setItem('lumina_current_chat_id', newChatId);
     } else {
       setChats(prev => prev.map(c => 
-        c.id === currentChatId 
+        c.id === currentChatIdRef.current 
           ? { ...c, messages: newMessages, updatedAt: Date.now() } 
           : c
       ));
@@ -322,24 +328,25 @@ export default function App() {
       {/* Settings Modal */}
       <AnimatePresence>
         {isSettingsModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0a]">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               className="relative w-full h-full bg-[#0a0a0a] overflow-hidden flex flex-col"
             >
-              <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-[#0a0a0a] sticky top-0 z-10">
+              <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-[#0a0a0a] sticky top-0 z-10 max-w-5xl mx-auto w-full">
                 <h2 className="text-2xl font-medium text-white tracking-tight">Settings</h2>
                 <button 
                   onClick={() => setIsSettingsModalOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-zinc-400 hover:text-white"
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-zinc-400 hover:text-white bg-white/5"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-8 md:p-12 space-y-12 max-w-4xl mx-auto w-full custom-scrollbar">
+              <div className="flex-1 overflow-y-auto w-full custom-scrollbar">
+                <div className="max-w-5xl mx-auto w-full p-6 md:p-10 space-y-12">
                 
                 {/* Identity & Naming */}
                 <section>
@@ -476,6 +483,7 @@ export default function App() {
                     </div>
                   </div>
                 </section>
+                </div>
               </div>
             </motion.div>
           </div>

@@ -32,7 +32,7 @@ async function startServer() {
       let apiKey = process.env.Owner || process.env.GROQ_API;
       let finalModel = model;
 
-      if (model === 'DavidAU/Qwen3.6-27B-Fable-Fusion-711-Uncensored-Heretic-NM-DAU-NEO-MAX-MTP-GGUF') {
+      if (model === 'Qwen/Qwen3.6-27B') {
         apiUrl = `https://router.huggingface.co/v1/chat/completions`;
         apiKey = process.env.HF_TOKEN;
         finalModel = model;
